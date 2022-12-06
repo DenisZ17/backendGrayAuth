@@ -28,21 +28,15 @@ class TypeServiceController {
       return res.status(500).json({ error: error.message });
     }
   }
+
   async update(req, res) {
     try {
-      const { typeId } = req.params;
-      const [updated] = await TypeService.update(req.body, {
-        where: { id: typeId },
-      });
-      if (updated) {
-        const updatedType = await TypeService.findOne({
-          where: { id: typeId },
-        });
-        return res.status(200).json({ type: updatedType });
-      }
-      throw new Error("Type not found");
+      const { id } = req.params;
+      const data = req.body;
+      const type = await TypeService.update(data, { where: { id } });
+      res.send("Type updated");
     } catch (error) {
-      return res.status(500).send(error.message);
+      return res.status(500).json({ error: error.message });
     }
   }
 

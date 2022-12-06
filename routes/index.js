@@ -4,9 +4,11 @@ const router = express.Router();
 const serviceRouter = require("./serviceRouter");
 const userRouter = require("./userRouter");
 const typeServiceRouter = require("./typeServiceRouter");
+const authRouter = require("./authRouter");
 
-router.use("/user", userRouter);
+router.use("/users", userRouter);
 router.use("/service", serviceRouter);
 router.use("/type", typeServiceRouter);
+router.use("/auth", authRouter);
 
 module.exports = router;

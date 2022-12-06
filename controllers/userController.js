@@ -3,17 +3,41 @@ const bcrypt = require("bcrypt");
 const jwtoken = require("jsonwebtoken");
 const { User, Basket } = require("../models/models");
 
-const generateJwt = (id, email, role) => {
-  return jwtoken.sign({ id, email, role }, process.env.SECRET_KEY, {
-    expiresIn: "24h",
-  });
-};
 class UserController {
-  async registration(req, res, next) {
-    const { email, password, role } = req.body;
-    if (!email || !password) {
-      return next(ApiError.badRequest("Некорректный email или пароль!"));
+  getAllUsers = async (req, res, next) => {
+    try {
+      const users = await User.findAll();
+      if (!users?.length) {
+        return res.status(400).json({ message: "No users found" });
+      }
+      return res.status(201).json(users);
+    } catch (error) {
+      next(ApiError.badRequest(error.message));
     }
+  };
+
+  getUser = async (req, res, next) => {
+    try {
+      const { id } = req.params;
+      const user = await User.findOne({
+        where: { id },
+      });
+      return res.json(user);
+    } catch (error) {
+      next(ApiError.badRequest(error.message));
+    }
+  };
+
+  // create New User
+
+  createNewUser = async (req, res, next) => {
+    const { username, email, password, role, isActive } = req.body;
+
+    if (!username || !email || !password || !role) {
+      return res.status(400).json({ message: "All fields are required" });
+    }
+
+    // Check for duplicate username
     const candidate = await User.findOne({
       where: { email },
     });
@@ -22,31 +46,41 @@ class UserController {
         ApiError.badRequest("Пользователь с таким email уже существует")
       );
     }
-    const hashPassword = await bcrypt.hash(password, 5);
-    const user = await User.create({ email, role, password: hashPassword });
-    const basket = await Basket.create({ userId: user.id });
-    const token = generateJwt(user.id, user.email, user.role);
-    return res.json({ token });
-  }
-  async login(req, res, next) {
-    const { email, password } = req.body;
-    const user = await User.findOne({
-      where: { email },
+
+    // Hash password
+    const hashedPwd = await bcrypt.hash(password, 10); // salt rounds
+
+    const user = await User.create({
+      username,
+      email,
+      password: hashedPwd,
+      role,
+      isActive,
     });
-    if (!user) {
-      return next(ApiError.internal("Такой пользователь не существует"));
+    const basket = await Basket.create({ userId: user.id });
+    if (user) {
+      //created
+      res.status(201).json({ message: `New user ${username} created` });
+    } else {
+      res.status(400).json({ message: "Invalid user data received" });
     }
-    let comparePassword = bcrypt.compareSync(password, user.password);
-    if (!comparePassword) {
-      return next(ApiError.badRequest("Неверный пароль!"));
+  };
+
+  deleteUser = async (req, res) => {
+    try {
+      const { id } = req.params; // Confirm data
+      const deleted = await User.destroy({
+        where: { id },
+      });
+      if (deleted) {
+        return res.status(204).send("User deleted");
+      }
+
+      throw new Error("User not found");
+    } catch (error) {
+      return res.status(500).send(error.message);
     }
-    const token = generateJwt(user.id, user.email, user.role);
-    return res.json({ token });
-  }
-  async check(req, res, next) {
-    const token = generateJwt(req.user.id, req.user.email, req.user.role);
-    return res.json({ token });
-  }
+  };
 }
 
 module.exports = new UserController();

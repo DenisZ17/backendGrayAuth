@@ -3,17 +3,18 @@ const sequelize = require("./db");
 const models = require("./models/models");
 const express = require("express");
 const cors = require("cors");
-const fileupload = require("express-fileupload");
+const { logger } = require("./middleware/logger");
 const cookieParser = require("cookie-parser");
 const router = require("./routes/index");
-const errorHandler = require("./middleware/ErrorHandlingMiddleware");
+const errorHandler = require("./middleware/errorHandler");
+const corsOptions = require("./config/corsOptions");
 const PORT = process.env.PORT || 5000;
 
 const app = express();
-app.use(cors()); // для запросов из браузера
+app.use(logger);
+app.use(cors(corsOptions)); // для запросов из браузера
 app.use(express.json());
 app.use(cookieParser());
-app.use(fileupload({}));
 app.use("/api", router);
 // Обработка ошибок, последний Middleware
 app.use(errorHandler);

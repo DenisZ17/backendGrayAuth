@@ -63,21 +63,17 @@ class ServiceController {
     }
   }
 
-  async update(req, res) {
+  async update(req, res, next) {
+    const id = req.params.id;
+    const data = req.body;
     try {
-      const { servid } = req.params;
-      const [updated] = await TypeService.update(req.body, {
-        where: { id: servid },
-      });
-      if (updated) {
-        const updatedType = await TypeService.findOne({
-          where: { id: typeId },
-        });
-        return res.status(200).json({ type: updatedType });
+      const service = await Service.update(data, { where: { id } });
+      res.send("Service updated!");
+      if (!service) {
+        return res.status(400).json({ message: "Service not found" });
       }
-      throw new Error("Type not found");
     } catch (error) {
-      return res.status(500).send(error.message);
+      next(ApiError.badRequest(error.message));
     }
   }
 }

@@ -3,9 +3,9 @@ const typeServiceController = require("../controllers/typeServiceController");
 const checkRole = require("../middleware/checkRoleMiddleware");
 const router = express.Router();
 
-router.post("/", checkRole("ADMIN"), typeServiceController.create);
+router.post("/", typeServiceController.create);
 router.get("/", typeServiceController.getAll);
 router.get("/:id", typeServiceController.getOne);
-router.delete("/:id", checkRole("ADMIN"), typeServiceController.delete);
-router.put("/:id", checkRole("ADMIN"), typeServiceController.update);
+router.delete("/:id", typeServiceController.delete);
+router.put("/:id", typeServiceController.update);
 module.exports = router;
